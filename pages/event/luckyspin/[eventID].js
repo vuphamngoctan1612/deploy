@@ -320,13 +320,13 @@ export default function LuckySpin() {
     }, [spinClicked])
 
     // ------------------------------------------------------------ useMemo
-    const spinBlock = useMemo(() => {
+    const spinBlock = () => {
         return <Spin listPlayer={playerShowList} />
-    }, [playerShowList])
+    }
 
-    const renderCurrEventDetail = useMemo(() => {
+    const renderCurrEventDetail = () => {
         return <CurrentEventDetail listPlayer={playerList} listReward={rewardList} remainReward={true}></CurrentEventDetail>
-    }, [playerList, rewardList]);
+    }
 
     const renderSetting = useMemo(() => {
         return <OverlayBlock childDiv={<LuckySpinSetting router={router} />} id={"settingOverlay"}></OverlayBlock>
