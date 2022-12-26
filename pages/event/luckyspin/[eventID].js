@@ -209,7 +209,7 @@ export default function LuckySpin() {
         }, ((spinTime - 2) * 1000))
     }
 
-    const awardNotification = useMemo(() => {
+    const awardNotification = () => {
         return (
             <div className="flex flex-col items-center text-center text-[#004599]" id="confirmAwardNotification"
                 onClick={(e) => e.stopPropagation()}>
@@ -250,7 +250,7 @@ export default function LuckySpin() {
                 </div>}
             </div>
         )
-    }, [confirmStatus, loadedData, spinClicked])
+    }
 
     // ------------------------------------------------------------------------ UseEffect
     // Real time
