@@ -320,9 +320,9 @@ export default function LuckySpin() {
     }, [spinClicked])
 
     // ------------------------------------------------------------ useMemo
-    const spinBlock = useMemo(() => {
+    const spinBlock = () => {
         return <Spin listPlayer={playerShowList} />
-    }, [playerShowList])
+    }
 
     const renderCurrEventDetail = () => {
         return <CurrentEventDetail listPlayer={playerList} listReward={rewardList} remainReward={true}></CurrentEventDetail>
