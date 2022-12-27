@@ -38,6 +38,10 @@ export default function Index() {
 
   const participant = usePlayerParticipantHook();
   const playerEvent = usePlayerEventHook();
+  
+  const handleClick = event => {
+    setIsShown(current => !current);
+  };
 
   useEffect(() => {
     if (participant.participantId && playerEvent.eventId && participant.eventId === playerEvent.eventId) {
