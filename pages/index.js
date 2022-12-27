@@ -296,9 +296,9 @@ export default function Index() {
     alert("not connect camera");
   }
   const handleScanWebCam = () => {
-    // if (result) {
-    //   setScanResultWebCam(result);
-    // }
+    if (result) {
+      setScanResultWebCam(result);
+    }
     router.push(data)
   }
   const renderQRscan = useMemo(() => {
