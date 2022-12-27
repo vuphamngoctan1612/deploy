@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux";
 import { incognitoEvent, incognitoUser, removePlayerState, removeUserHosting, removeUserPlaying, userCurrentEventPlaying } from "public/redux/actions";
 import { usePlayerEventHook, usePlayerParticipantHook, usePopUpMessageHook, usePopUpStatusHook, usePopUpVisibleHook, useUserCurrEventCreatingHook, useUserCurrEventHostingHook, useUserCurrEventPlayingHook, useUserCurrRewardCreatingHook, useUserPackageHook } from "public/redux/hooks";
 import { Line, Button, PopUp, WayLog, Logo, Input, QrButton, Title } from "public/shared";
-import QrReader from 'react-qr-reader'
+import { QrReader } from 'react-qr-reader';
 
 export default function Index() {
   const [pin, setPin] = useState("");
@@ -297,11 +297,17 @@ export default function Index() {
 
         {isShown && <QrReader
           //  ref={qrRef}
-          facingMode={'environment'}
-          delay={300}
+          scanDelay={300}
           style={{ width: '180px' }}
-          onError={handleErrorWebCam}
-          onScan={handleScanWebCam}
+          onResult={(result, error) => {
+            if (!!result) {
+              setScanResultWebCam(result?.text)
+            }
+  
+            if (!!error) {
+              console.info(error);
+            }
+          }}
         />}
         {/* {isShown && <BgBlueButton className="w-[200px]"  variant="contained" content="open file" onClick={onScanFile}/>} */}
         {isShown && (
