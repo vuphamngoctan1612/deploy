@@ -307,6 +307,7 @@ export default function Index() {
           if (window.innerWidth > 768) {
             return
           }
+          setScanResultWebCam("load 1")
           setIsShown(current => !current);
         }} />
         {/* {isShown && <QrReader className="h-[120px]"     
