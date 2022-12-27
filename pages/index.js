@@ -14,11 +14,11 @@ import { useDispatch } from "react-redux";
 import { incognitoEvent, incognitoUser, removePlayerState, removeUserHosting, removeUserPlaying, userCurrentEventPlaying } from "public/redux/actions";
 import { usePlayerEventHook, usePlayerParticipantHook, usePopUpMessageHook, usePopUpStatusHook, usePopUpVisibleHook, useUserCurrEventCreatingHook, useUserCurrEventHostingHook, useUserCurrEventPlayingHook, useUserCurrRewardCreatingHook, useUserPackageHook } from "public/redux/hooks";
 import { Line, Button, PopUp, WayLog, Logo, Input, QrButton, Title } from "public/shared";
-import { QrReader } from 'react-qr-reader';
+import QrReader from 'react-qr-scanner'
 
 export default function Index() {
   const [pin, setPin] = useState("");
-  const [scanResultWebCam, setScanResultWebCam] = useState('');
+  const [scanResultWebCam, setScanResultWebCam] =  useState('');
   const [isShown, setIsShown] = useState(false);
 
   const message = usePopUpMessageHook();
@@ -38,10 +38,6 @@ export default function Index() {
 
   const participant = usePlayerParticipantHook();
   const playerEvent = usePlayerEventHook();
-
-  const handleClick = event => {
-    setIsShown(current => !current);
-  };
 
   useEffect(() => {
     if (participant.participantId && playerEvent.eventId && participant.eventId === playerEvent.eventId) {
@@ -275,40 +271,64 @@ export default function Index() {
   //     }
   //   });
   // } else {
+
+  const handleClick = event => {
+    setIsShown(current => !current);
+  };
+  
+    // const [scanResultFile, setScanResultFile] = useState('');
+    // const qrRef = useRef(null)
+  
+    //  const handleErrorFile = (error) => {
+    //      alert(error)
+    //   }
+    //   const  handleScanFile = (result) => {
+    //     if  (result) {
+    //        setScanResultFile(result)
+    //     }
+    //   }
+    // const onScanFile = () => {
+    //   if(qrRef && qrRef.current) qrRef.current.openImageDialog()
+    // }
+
+  
   const handleErrorWebCam = (error) => {
     alert("not connect camera");
   }
   const handleScanWebCam = (result) => {
-    if (result) {
-      setScanResultWebCam(result);
+    if (result){
+        setScanResultWebCam(result);
     }
   }
-  const renderQRscan = useMemo(() => {
-    return (
+  const renderQRscan = useMemo(() =>{
+    return(
       <div className="flex flex-col justify-center items-center">
         <QrButton onClick={() => {
-          if (window.innerWidth > 768) {
+          if (window.innerWidth <= 768) {
             return
           }
           setIsShown(current => !current);
         }} />
         {/* {isShown && <QrReader className="h-[120px]"     
-          />} */}
+        />} */}
 
-        {isShown && <QrReader
-          scanDelay={300}
-          onError={handleErrorWebCam}
-          onResult={handleScanWebCam}
-          style={{ width: '180px' }}
+        {isShown && <QrReader 
+          //  ref={qrRef}
+            delay={300}
+            style={{ width:'180px'}}
+            onError={handleErrorWebCam}
+            onScan={handleScanWebCam}
         />}
         {/* {isShown && <BgBlueButton className="w-[200px]"  variant="contained" content="open file" onClick={onScanFile}/>} */}
         {isShown && (
-          <div>
-            <h3> Scanned  Code: <a href={scanResultWebCam}>{scanResultWebCam}</a></h3>
-          </div>)}
-      </div>
+        <div>
+        <h3> Scanned  Code: <a  href={scanResultWebCam}>{scanResultWebCam}</a></h3>
+        </div>)}
+      </div>  
     )
-  }, [handleClick, isShown])
+  },[handleClick,isShown])
+
+
   return (
     <section className={`h-screen h-min-full w-screen mx-auto flex justify-center items-center ${BG_COLOR}`} >
       <div className={`flex flex-col justify-center items-center max-w-xl w-4/5 h-full h-min-screen `} >
@@ -318,7 +338,6 @@ export default function Index() {
         {renderButton}
         {renderLine}
         {renderQRscan}
-        {/* Handle logic todo: go direct to open device's camera */}
         {renderDirect}
       </div>
       {renderPopUp}
