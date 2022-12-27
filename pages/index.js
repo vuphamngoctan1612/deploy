@@ -18,7 +18,7 @@ import QrReader from 'react-qr-scanner'
 
 export default function Index() {
   const [pin, setPin] = useState("");
-  const [scanResultWebCam, setScanResultWebCam] =  useState('');
+  const [scanResultWebCam, setScanResultWebCam] = useState('');
   const [isShown, setIsShown] = useState(false);
 
   const message = usePopUpMessageHook();
@@ -275,36 +275,36 @@ export default function Index() {
   const handleClick = event => {
     setIsShown(current => !current);
   };
-  
-    // const [scanResultFile, setScanResultFile] = useState('');
-    // const qrRef = useRef(null)
-  
-    //  const handleErrorFile = (error) => {
-    //      alert(error)
-    //   }
-    //   const  handleScanFile = (result) => {
-    //     if  (result) {
-    //        setScanResultFile(result)
-    //     }
-    //   }
-    // const onScanFile = () => {
-    //   if(qrRef && qrRef.current) qrRef.current.openImageDialog()
-    // }
 
-  
+  // const [scanResultFile, setScanResultFile] = useState('');
+  // const qrRef = useRef(null)
+
+  //  const handleErrorFile = (error) => {
+  //      alert(error)
+  //   }
+  //   const  handleScanFile = (result) => {
+  //     if  (result) {
+  //        setScanResultFile(result)
+  //     }
+  //   }
+  // const onScanFile = () => {
+  //   if(qrRef && qrRef.current) qrRef.current.openImageDialog()
+  // }
+
+
   const handleErrorWebCam = (error) => {
     alert("not connect camera");
   }
   const handleScanWebCam = (result) => {
-    if (result){
-        setScanResultWebCam(result);
+    if (result) {
+      setScanResultWebCam(result);
     }
   }
-  const renderQRscan = useMemo(() =>{
-    return(
+  const renderQRscan = useMemo(() => {
+    return (
       <div className="flex flex-col justify-center items-center">
         <QrButton onClick={() => {
-          if (window.innerWidth <= 768) {
+          if (window.innerWidth > 768) {
             return
           }
           setIsShown(current => !current);
@@ -312,21 +312,22 @@ export default function Index() {
         {/* {isShown && <QrReader className="h-[120px]"     
         />} */}
 
-        {isShown && <QrReader 
+        {isShown && <QrReader
           //  ref={qrRef}
-            delay={300}
-            style={{ width:'180px'}}
-            onError={handleErrorWebCam}
-            onScan={handleScanWebCam}
+          constraints={{ facingMode: 'rear' }}
+          delay={300}
+          style={{ width: '180px' }}
+          onError={handleErrorWebCam}
+          onScan={handleScanWebCam}
         />}
         {/* {isShown && <BgBlueButton className="w-[200px]"  variant="contained" content="open file" onClick={onScanFile}/>} */}
         {isShown && (
-        <div>
-        <h3> Scanned  Code: <a  href={scanResultWebCam}>{scanResultWebCam}</a></h3>
-        </div>)}
-      </div>  
+          <div>
+            <h3> Scanned  Code: <a href={scanResultWebCam}>{scanResultWebCam}</a></h3>
+          </div>)}
+      </div>
     )
-  },[handleClick,isShown])
+  }, [handleClick, isShown])
 
 
   return (
