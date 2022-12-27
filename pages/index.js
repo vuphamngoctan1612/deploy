@@ -314,10 +314,15 @@ export default function Index() {
 
         {isShown && <QrReader
           //  ref={qrRef}
-          constraints={'rear' }
+          constraints={{
+            audio: false,
+            video: {
+              facingMode: 'environment'
+            }
+          }}
           delay={300}
           style={{ width: '180px' }}
-          onError={handleErrorWebCam}
+          onError={err => { handleErrorWebCam, console.log(err) }}
           onScan={handleScanWebCam}
         />}
         {/* {isShown && <BgBlueButton className="w-[200px]"  variant="contained" content="open file" onClick={onScanFile}/>} */}
