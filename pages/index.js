@@ -314,7 +314,7 @@ export default function Index() {
 
         {isShown && <QrReader
           //  ref={qrRef}
-          constraints={{ facingMode: 'rear' }}
+          constraints={'rear' }
           delay={300}
           style={{ width: '180px' }}
           onError={handleErrorWebCam}
