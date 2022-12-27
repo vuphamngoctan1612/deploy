@@ -295,10 +295,11 @@ export default function Index() {
   const handleErrorWebCam = (error) => {
     alert("not connect camera");
   }
-  const handleScanWebCam = (result) => {
-    if (result) {
-      setScanResultWebCam(result);
-    }
+  const handleScanWebCam = () => {
+    // if (result) {
+    //   setScanResultWebCam(result);
+    // }
+    router.push(data)
   }
   const renderQRscan = useMemo(() => {
     return (
@@ -323,7 +324,7 @@ export default function Index() {
           delay={300}
           style={{ width: '180px' }}
           onError={err => { handleErrorWebCam, console.log(err) }}
-          onScan={result => router.push(result)}
+          onScan={handleScanWebCam}
         />}
         {/* {isShown && <BgBlueButton className="w-[200px]"  variant="contained" content="open file" onClick={onScanFile}/>} */}
         {isShown && (
