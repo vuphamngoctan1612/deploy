@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux";
 import { incognitoEvent, incognitoUser, removePlayerState, removeUserHosting, removeUserPlaying, userCurrentEventPlaying } from "public/redux/actions";
 import { usePlayerEventHook, usePlayerParticipantHook, usePopUpMessageHook, usePopUpStatusHook, usePopUpVisibleHook, useUserCurrEventCreatingHook, useUserCurrEventHostingHook, useUserCurrEventPlayingHook, useUserCurrRewardCreatingHook, useUserPackageHook } from "public/redux/hooks";
 import { Line, Button, PopUp, WayLog, Logo, Input, QrButton, Title } from "public/shared";
-import QrReader from 'react-qr-scanner'
+import QrReader from 'react-web-qr-reader'
 
 export default function Index() {
   const [pin, setPin] = useState("");
@@ -295,9 +295,9 @@ export default function Index() {
   const handleErrorWebCam = (error) => {
     alert("not connect camera");
   }
-  const handleScanWebCam = (data) => {
-    if (data) {
-      setScanResultWebCam(data);
+  const handleScanWebCam = (result) => {
+    if (result) {
+      setScanResultWebCam(result);
     } 
   }
   const renderQRscan = useMemo(() => {
@@ -314,16 +314,16 @@ export default function Index() {
 
         {<QrReader
           //  ref={qrRef}
-          constraints={{
-            audio: false,
-            video: {
-              facingMode: 'environment'
-            }
-          }}
-          delay={300}
+          // constraints={{
+          //   audio: false,
+          //   video: {
+          //     facingMode: 'environment'
+          //   }
+          // }}
+          delay={500}
           style={{ width: '180px' }}
           onError={err => { handleErrorWebCam, console.log(err) }}
-          onScan={data => {handleScanWebCam(data)}}
+          onScan={handleScanWebCam}
         />}
         {/* {isShown && <BgBlueButton className="w-[200px]"  variant="contained" content="open file" onClick={onScanFile}/>} */}
         {isShown && (
