@@ -287,7 +287,7 @@ export default function Index() {
     return (
       <div className="flex flex-col justify-center items-center">
         <QrButton onClick={() => {
-          if (window.innerWidth => 768) {
+          if (window.innerWidth > 768) {
             return
           }
           setIsShown(current => !current);
