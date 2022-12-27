@@ -307,13 +307,12 @@ export default function Index() {
           if (window.innerWidth > 768) {
             return
           }
-          setScanResultWebCam("load 1")
           setIsShown(current => !current);
         }} />
         {/* {isShown && <QrReader className="h-[120px]"     
         />} */}
 
-        {isShown && <QrReader
+        <QrReader
           //  ref={qrRef}
           constraints={{
             audio: false,
@@ -325,7 +324,7 @@ export default function Index() {
           style={{ width: '180px' }}
           onError={err => { handleErrorWebCam, console.log(err) }}
           onScan={data => {handleScanWebCam(data)}}
-        />}
+        />
         {/* {isShown && <BgBlueButton className="w-[200px]"  variant="contained" content="open file" onClick={onScanFile}/>} */}
         {isShown && (
           <div>
