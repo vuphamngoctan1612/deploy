@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import Button from "public/shared/Button";
 import Title from "public/shared/Title";
-import { useMemo } from "react/cjs/react.development";
 import Spin from "public/shared/Spin";
 import CurrentEventDetail from "public/shared/CurrentEventDetail";
 import OverlayBlock from "public/shared/OverlayBlock";
@@ -10,7 +9,7 @@ import PageLoading from "public/shared/PageLoading";
 import { useRouter } from "next/router";
 
 import { useDispatch } from "react-redux";
-import { userEvent, incognitoEvent } from "public/redux/actions";
+import { userEvent, incognitoEvent, removeUserHosting } from "public/redux/actions";
 import { useUserPackageHook } from "public/redux/hooks";
 // firebase
 import { auth, db } from "../../../src/firebase";
@@ -64,40 +63,84 @@ export default function LuckySpinAdmin() {
     // Thời gian cho animate quay thưởng
     const [spinTime, setSpinTime] = useState(4);
 
-    const getEventID = () => {
+    const getData = () => {
         console.log("Welcome admin ", adminId);
         console.log("Getting event with ID:", EventID);
-        get(query(ref(db, "event"), orderByChild("eventId"), equalTo(EventID))).then((snapshot) => {
-            if (snapshot.exists()) {
+
+        const asyncData = () => {
+            const que2 = query(ref(db, "event_participants"), orderByChild("eventId"), equalTo(EventID));
+            const que3 = query(ref(db, "event"), orderByChild("eventId"), equalTo(EventID));
+            const que1 = query(ref(db, "event_rewards"), orderByChild("eventId"), equalTo(EventID));
+            //  Load data
+            const loadEventPaticipant = get(que2);
+            const loadEvent = get(que3);
+            const loadEventReward = get(que1);
+            let combined_promise = Promise.all([loadEventPaticipant, loadEvent, loadEventReward]);
+            return combined_promise;
+        }
+
+        async function loadData() {
+            await update(ref(db, "event/" + EventID + "/playingData"), {
+                isSpinning: false,
+                lastAwardedIndex: 0,
+                lastAwardedId: "",
+                rewardChosingId: "",
+                rewardChosingIndex: 0,
+                spinTime: spinTime,
+                confirmStatus: 0 // -1:Spinning, 0: Waiting; 1: Confirm; 2: Cancel
+            });
+            
+            const dataset = await asyncData();
+            // Event Paticipant
+            if (dataset[0].exists()) {
+                const rawData = dataset[0].val();
+                const dataEventParticipant = Object.values(rawData);
+                const online = dataEventParticipant.filter(val => val.status === 1).length;
+                const filted = dataEventParticipant.filter(val => (val.idReward === "" && val.status === 1));
+                setPlayerList(rawData);
+                setRemainPlayerList(filted);
+                setOnlinePlayerAmount(online);
+            }
+            // Event
+            if (dataset[1].exists()) {
                 // setEventID(Object.keys(snapshot.val())[0]);
-                const data = Object.values(snapshot.val())[0];
-                if (data["status"] === 1) router.push('/');
-                if (data["status"] === 2) router.push('/admin/event/countdown-checkin');
-                if (data["status"] === 4) router.push('/event/event-result/' + EventID);
-                setEventInfo(data);
+                const dataEvent = Object.values(dataset[1].val())[0];
+                if (dataEvent["status"] === 1) router.push('/');
+                if (dataEvent["status"] === 2) router.push('/admin/event/countdown-checkin');
+                if (dataEvent["status"] === 4) router.push('/event/event-result/' + EventID);
+                setEventInfo(dataEvent);
                 // Nếu không phải admin sự kiện, đưa về trang chủ.
-                if (adminId !== data.createBy) {
+                if (adminId !== dataEvent.createBy) {
                     console.log('No permission!')
-                    router.push('/');
+                    router.push('/admin/dashboard-admin');
                 };
+                const rewardChosingIndex = dataEvent['playingData']['rewardChosingIndex'];
+                const spin_time = dataEvent['playingData']['spinTime'];
+                setRewardChosing(rewardChosingIndex);
+                setSpinTime(spin_time);
             } else {
                 console.log('Not found event');
                 router.back();
             }
-        })
+            // Event Reward
+            if (dataset[2].exists()) {
+                const dataEventReward = [...Object.values(dataset[2].val())];
+                dataEventReward.sort(compare);
+                setRewardList(dataEventReward);
+                const remainRewardData = dataEventReward.filter((val) => (val.quantityRemain > 0))
+                setRemainRewardList(remainRewardData);
+                const rewardChosingId = remainRewardData[0]?remainRewardData[0].idReward:"";
+                update(ref(db, "event/" + EventID + "/playingData"), {rewardChosingId: rewardChosingId});
+                setIDRewardChosing(rewardChosingId);
+            }
+            setLoadedData(true);
+        }
+
+        loadData();
     }
 
     const fetchDB = () => {
         console.log(`Getting event ${EventID}'s data`);
-        update(ref(db, "event/" + EventID + "/playingData"), {
-            isSpinning: false,
-            lastAwardedIndex: 0,
-            lastAwardedId: "",
-            rewardChosingId: "",
-            rewardChosingIndex: 0,
-            spinTime: spinTime,
-            confirmStatus: 0 // -1:Spinning, 0: Waiting; 1: Confirm; 2: Cancel
-        });
 
         const que3 = query(ref(db, "event"), orderByChild("eventId"), equalTo(EventID));
         onValue(que3, (snapshot) => {
@@ -107,11 +150,6 @@ export default function LuckySpinAdmin() {
                 if (data["status"] === 2) router.push('/admin/event/countdown-checkin');
                 if (data["status"] === 4) router.push('/event/event-result/' + EventID);
                 setEventInfo(data);
-                // // Nếu không phải admin sự kiện, đưa về trang chủ.
-                // if (adminId !== data.createBy) {
-                //     console.log('No permission!')
-                //     router.push('/');
-                // };
                 const rewardChosingIndex = data['playingData']['rewardChosingIndex'];
                 const rewardChosingId = data['playingData']['rewardChosingId'];
                 const spin_time = data['playingData']['spinTime'];
@@ -119,10 +157,10 @@ export default function LuckySpinAdmin() {
                 setIDRewardChosing(rewardChosingId);
                 setSpinTime(spin_time);
             } else {
-                router.back();
+                router.push('/');
             }
         });
-
+        
         const que1 = query(ref(db, "event_rewards"), orderByChild("eventId"), equalTo(EventID));
         onValue(que1, (snapshot) => {
             if (snapshot.exists()) {
@@ -138,24 +176,13 @@ export default function LuckySpinAdmin() {
             if (snapshot.exists()) {
                 const rawData = snapshot.val();
                 const data = Object.values(rawData);
-                data.forEach((val, idx) => {
-                    val.ID = Object.keys(rawData)[idx];
-                    get(child(ref(db), "users/" + val.createBy)).then((snapshot) => {
-                        if (snapshot.exists()) {
-                            val['pic'] = snapshot.val().pic;
-                        }
-                    })
-                })
-                setTimeout(function () {
-                    const online = data.filter(val => val.status === 1).length;
-                    const filted = data.filter(val => (val.idReward === "" && val.status === 1));
-                    setPlayerList(rawData);
-                    setRemainPlayerList(filted);
-                    setOnlinePlayerAmount(online);
-                }, 200)
+                const online = data.filter(val => val.status === 1).length;
+                const filted = data.filter(val => (val.idReward === "" && val.status === 1));
+                setPlayerList(rawData);
+                setRemainPlayerList(filted);
+                setOnlinePlayerAmount(online);
             }
         });
-        setTimeout(() => setLoadedData(true), 1000)
     }
 
     // ------------------------------------------------ Function
@@ -183,7 +210,7 @@ export default function LuckySpinAdmin() {
         updateFB('event/' + EventID + '/playingData', { confirmStatus: -1 });
         // Random đối tượng
         const randomNum = Math.floor(Math.random() * (remainPlayerList.length));
-        setSpinningFB(true, randomNum, remainPlayerList[randomNum].ID);
+        setSpinningFB(true, randomNum, remainPlayerList[randomNum].participantId);
         setAwardedIdx(randomNum);
         Array.from({ length: 9 }, (_, index) => index).forEach(idx => {
             document.getElementById("spin-idx-" + idx).classList.add("animate-move-down-" + idx)
@@ -214,13 +241,13 @@ export default function LuckySpinAdmin() {
                 Array.from({ length: 9 }, (_, index) => index).forEach(idx => {
                     document.getElementById("spin-idx-" + idx).classList.remove("animate-slow-move-down-" + idx)
                 })
-                setSpinningFB(false, randomNum, remainPlayerList[randomNum].ID);
+                setSpinningFB(false, randomNum, remainPlayerList[randomNum].participantId);
                 setSpinClicked(false);
                 document.getElementById("gameSound").play();
                 updateFB('event/' + EventID + '/playingData', { confirmStatus: 0 });
                 const timeoutPhase3 = setTimeout(() => {
                     document.getElementById("awardedOverlay").classList.toggle('hidden');
-                    setAwardedId(remainPlayerList[randomNum].ID);
+                    setAwardedId(remainPlayerList[randomNum].participantId);
                     document.getElementById("gameSound").pause();
                 }, (500))
             }, (2000))
@@ -250,23 +277,29 @@ export default function LuckySpinAdmin() {
     }, [dispatch])
 
     useEffect(() => {
-        getEventID()
+        getData();
     }, [])
 
     useEffect(() => {
         if (EventID === "") return;
 
-        fetchDB();
+        if (loadedData) fetchDB();
 
         window.addEventListener('beforeunload',
-            () => updateFB('event/' + EventID + '/playingData', { isSpinning: false }));
+            () => {
+                get(ref(db, 'event/' + EventID + '/playingData')).then((snapshot) => {
+                    if (snapshot.exists()) {
+                        updateFB('event/' + EventID + '/playingData', { isSpinning: false });
+                    }
+                })
+            });
 
         return () => {
             updateFB('event/' + EventID + '/playingData', { isSpinning: false });
             window.removeEventListener('beforeunload',
                 () => updateFB('event/' + EventID + '/playingData', { isSpinning: false }));
         }
-    }, [EventID])
+    }, [EventID, loadedData])
 
     // Điều chỉnh danh sách người chơi được điều chỉnh
     useEffect(() => {
@@ -307,8 +340,9 @@ export default function LuckySpinAdmin() {
             <p className="text-[#004599] text-xl text-center w-full font-bold">Bạn có chắc chắn muốn <br /><span className="text-[#FF6262] uppercase">kết thúc</span> sự kiện?</p>
             <div className="mt-2 w-full flex gap-4 px-2">
                 <Button fontSize={"20px"} content={"CÓ"} primaryColor={"#FF6262"} isSquare={true} marginY={0} onClick={() => {
+                    // remove(child(ref(db), "event/" + EventID + "/playingData"));
+                    dispatch(removeUserHosting)
                     updateFB('event/' + EventID, { status: 4 });
-                    remove(child(ref(db), "event/" + EventID + "/playingData"));
                 }} />
                 <Button fontSize={"20px"} content={"KHÔNG"} primaryColor={"#3B88C3"} isSquare={true} marginY={0} onClick={() => { document.getElementById("finishOverlay").classList.toggle('hidden') }} />
             </div>

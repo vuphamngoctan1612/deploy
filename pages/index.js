@@ -6,15 +6,15 @@ import { React, useCallback, useEffect, useMemo, useState } from "react";
 import { LEFT_COLOR, RIGHT_COLOR } from "public/util/colors";
 import router from "next/router";
 import { db } from "src/firebase";
-import { ref, child, get, query, orderByChild, equalTo } from "firebase/database";
+import { ref, child, get } from "firebase/database";
 import { isEmpty } from "public/util/functions";
 import { ShowMethod, checkStatus } from "public/util/popup";
 import { messagesError, messagesSuccess } from "public/util/messages";
 import { useDispatch } from "react-redux";
-import { incognitoEvent, incognitoUser, removePlayerState, removeUserHosting, removeUserPlaying, userCurrentEventPlaying } from "public/redux/actions";
+import { incognitoEvent, incognitoUser, removePlayerState, removeUserPlaying, userCurrentEventPlaying } from "public/redux/actions";
 import { usePlayerEventHook, usePlayerParticipantHook, usePopUpMessageHook, usePopUpStatusHook, usePopUpVisibleHook, useUserCurrEventCreatingHook, useUserCurrEventHostingHook, useUserCurrEventPlayingHook, useUserCurrRewardCreatingHook, useUserPackageHook } from "public/redux/hooks";
 import { Line, Button, PopUp, WayLog, Logo, Input, QrButton, Title } from "public/shared";
-import QrReader from 'react-web-qr-reader'
+import QrReader from 'react-qr-scanner'
 
 export default function Index() {
   const [pin, setPin] = useState("");
@@ -77,6 +77,7 @@ export default function Index() {
     }
   }, [])
 
+
   const onJoinClick = useCallback(() => {
     if (isEmpty(pin)) {
       ShowMethod(dispatch, messagesError.E2002, false);
@@ -88,6 +89,10 @@ export default function Index() {
       var currEvent = values.find((item) => item.pinCode === pin);
       if (currEvent === undefined || currEvent.delFlag === true) {
         ShowMethod(dispatch, messagesError.E2004, false);
+        return;
+      }
+      if (currEvent.maxTicket <= currEvent.userJoined) {
+        ShowMethod(dispatch, messagesError.E2005, false);
         return;
       }
       dispatch(incognitoEvent(currEvent));
@@ -129,7 +134,7 @@ export default function Index() {
       <Input
         placeHolder="Mã pin"
         onChange={pinData}
-        type="text"
+        type="number"
         primaryColor={LEFT_COLOR}
         secondaryColor={RIGHT_COLOR}
         noContent={true}
@@ -197,84 +202,50 @@ export default function Index() {
       </div>
     )
   }, [visible, status, message])
+  
+  const handleErrorWebCam = (error) => {
+    alert("Some thing's wrong");
+  }
+  
+  const handleScanWebCam = (result) => {
+    if (result) {
+      setScanResultWebCam(result);
+      console.log(result);
+      router.push(result?.text);
+      return;
+    }
+  }
+  
+  const renderQRscan = useMemo(() => {
+    return (
+      <div className="flex flex-col justify-center items-center">
+        <QrButton onClick={() => {
+          if (window.innerWidth > 768) {
+            alert("Can not connect to camera in this device")
+            return;
+          }
+          setIsShown(current => !current);
+        }} />
 
-  // if (playerCreatedById === userId
-  //   && eventUserPlayingId === eventParticipant
-  //   && statusEventPlayer === statusEventUser
-  //   && ownerEventUser !== ownerEventParticipant) {
-  //   get(child(ref(db), "event/")).then((snapshot) => {
-  //     const record = snapshot.val() ?? [];
-  //     const values = Object.values(record);
-  //     var currEvent = values.find((item) => item.eventId === eventUserPlayingId);
-  //     if (currEvent === undefined || currEvent.delFlag === true) {
-  //       ShowMethod(dispatch, messagesError.E2004, false);
-  //       return;
-  //     }
-  //     switch (currEvent.status) {
-  //       case 1:
-  //         dispatch(removePlayerState());
-  //         dispatch(removeUserPlaying());
-  //         ShowMethod(dispatch, messagesError.E3001, false);
-  //         return;
-  //       case 2:
-  //         ShowMethod(dispatch, messagesSuccess.I0008(currEvent.title), true);
-  //         setTimeout(() => {
-  //           router.push("event/countdown-checkin");
-  //         }, 500);
-  //         return
-  //       case 3:
-  //         dispatch(removePlayerState());
-  //         dispatch(removeUserPlaying());
-  //         ShowMethod(dispatch, messagesError.E3002, false);
-  //         return;
-  //       case 4:
-  //         dispatch(removePlayerState());
-  //         dispatch(removeUserPlaying());
-  //         ShowMethod(dispatch, messagesError.E3003, false);
-  //         return;
-  //       default:
-  //         return;
-  //     }
-  //   });
-  // } else if (ownerEventUser === ownerEventParticipant) {
-  //   get(child(ref(db), "event/")).then((snapshot) => {
-  //     const record = snapshot.val() ?? [];
-  //     const values = Object.values(record);
-  //     var currEvent = values.find((item) => item.eventId === userHostingEvent.eventId);
-  //     if (currEvent === undefined || currEvent.delFlag === true) {
-  //       ShowMethod(dispatch, messagesError.E2004, false);
-  //       return;
-  //     }
-  //     switch (currEvent.status) {
-  //       case 1:
-  //         setTimeout(() => {
-  //           router.push("/admin/event/event-detail");
-  //         }, 500);
-  //         return;
-  //       case 2:
-  //         setTimeout(() => {
-  //           router.push("/admin/countdown-checkin");
-  //         }, 500);
-  //         return
-  //       case 3:
-  //         setTimeout(() => {
-  //           router.push("/admin/luckyspin/" + currEvent.eventId);
-  //         }, 500);
-  //         return;
-  //       case 4:
-  //         dispatch(removePlayerState());
-  //         dispatch(removeUserHosting())
-  //         ShowMethod(dispatch, messagesError.E3003, false);
-  //         return;
-  //       default:
-  //         return;
-  //     }
-  //   });
-  // } else {
+        {isShown && <QrReader
+          delay={300}
+          style={{ width: '180px' }}
+          constraints={{ audio: false, video: { facingMode: 'environment' } }}
+          onError={handleErrorWebCam}
+          onResult={handleScanWebCam}
+        />}
 
-  const handleClick = event => {
-    setIsShown(current => !current);
-  };
+        {isShown && (
+          <div>
+            <h3> Scanned  Code: <a href={scanResultWebCam}>{scanResultWebCam}</a></h3>
+          </div>)}
+      </div>
+    )
+  }, [isShown, scanResultWebCam])
+
+  // const handleClick = event => {
+  //   setIsShown(current => !current);
+  // };
 
   // const [scanResultFile, setScanResultFile] = useState('');
   // const qrRef = useRef(null)
@@ -292,49 +263,6 @@ export default function Index() {
   // }
 
 
-  const handleErrorWebCam = (error) => {
-    alert("not connect camera");
-  }
-  const handleScanWebCam = (result) => {
-    if (result) {
-      setScanResultWebCam(result);
-    } 
-  }
-  const renderQRscan = useMemo(() => {
-    return (
-      <div className="flex flex-col justify-center items-center">
-        <QrButton onClick={() => {
-          if (window.innerWidth > 768) {
-            return
-          }
-          setIsShown(current => !current);
-        }} />
-        {/* {isShown && <QrReader className="h-[120px]"     
-        />} */}
-
-        {<QrReader
-          //  ref={qrRef}
-          // constraints={{
-          //   audio: false,
-          //   video: {
-          //     facingMode: 'environment'
-          //   }
-          // }}
-          delay={500}
-          style={{ width: '180px' }}
-          onError={err => { handleErrorWebCam, console.log(err) }}
-          onScan={handleScanWebCam}
-        />}
-        {/* {isShown && <BgBlueButton className="w-[200px]"  variant="contained" content="open file" onClick={onScanFile}/>} */}
-        {isShown && (
-          <div>
-            <h3> {scanResultWebCam}</h3>
-          </div>)}
-      </div>
-    )
-  }, [handleClick, isShown])
-
-
   return (
     <section className={`h-screen h-min-full w-screen mx-auto flex justify-center items-center ${BG_COLOR}`} >
       <div className={`flex flex-col justify-center items-center max-w-xl w-4/5 h-full h-min-screen `} >
@@ -349,5 +277,4 @@ export default function Index() {
       {renderPopUp}
     </section>
   );
-  // }
 }
