@@ -226,7 +226,7 @@ export default function Index() {
     }
     const handleScanWebCam = (result) => {
       if (result) {
-        setScanResultWebCam(result);
+        setScanResultWebCam(result?.text);
         const parsedUrl = new URL(result?.text);
         const path = parsedUrl.pathname;
         const id = path.split("/").slice(-1)[0];
