@@ -232,7 +232,7 @@ export default function Index() {
           style={{ width: '180px' }}
           constraints={{ audio: false, video: { facingMode: 'environment' } }}
           onError={handleErrorWebCam}
-          onResult={handleScanWebCam}
+          onLoad={handleScanWebCam}
         />}
 
         {isShown && (
