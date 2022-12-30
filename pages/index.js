@@ -254,7 +254,7 @@ export default function Index() {
             var currUser = values.find((item) => item.userId === currEvent.createBy);
             dispatch(incognitoUser(currUser));
           });
-          const path = "/event/join";
+          const path = "/event/join/01200210";
           checkStatus(dispatch, router, currEvent.title, currEvent.status, path);
         });
       }
